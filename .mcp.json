@@ -1,0 +1,8 @@
+{
+  "mcpServers": {
+    "hercules": {
+      "type": "http",
+      "url": "https://hercules.app/mcp"
+    }
+  }
+}
