@@ -1,0 +1,15 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://one-business.local/contracts/v1/gateway-request.schema.json",
+  "title": "Gateway request (business/v1)",
+  "description": "POST /api/v1/gateway with Authorization: Bearer <session token>. tenantId is never accepted in the body.",
+  "type": "object",
+  "required": ["module", "capability", "action"],
+  "properties": {
+    "module": { "type": "string" },
+    "capability": { "type": "string" },
+    "action": { "type": "string" },
+    "payload": { "type": "object" }
+  },
+  "additionalProperties": false
+}

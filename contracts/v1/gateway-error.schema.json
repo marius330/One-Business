@@ -1,0 +1,15 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://one-business.local/contracts/v1/gateway-error.schema.json",
+  "title": "Gateway error (business/v1)",
+  "type": "object",
+  "required": ["error", "message"],
+  "properties": {
+    "error": {
+      "type": "string",
+      "enum": ["UNAUTHENTICATED", "TENANT_SUSPENDED", "NOT_FOUND", "MODULE_NOT_ACTIVE", "PERMISSION_DENIED", "UNDECLARED_DEPENDENCY", "DEPENDENCY_NOT_ACTIVE", "VALIDATION_ERROR", "CONFLICT", "SNAPSHOT_TENANT_MISMATCH", "INTERNAL"]
+    },
+    "message": { "type": "string" },
+    "details": {}
+  }
+}

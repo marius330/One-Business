@@ -1,0 +1,44 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://one-business.local/contracts/v1/module-manifest.schema.json",
+  "title": "Module manifest (business/v1)",
+  "type": "object",
+  "required": ["id", "name", "version", "contract", "provides", "plans"],
+  "properties": {
+    "id": { "type": "string", "pattern": "^[a-z][a-z0-9_]{1,30}$" },
+    "name": { "type": "string" },
+    "description": { "type": "string" },
+    "version": { "type": "string", "pattern": "^\\d+\\.\\d+\\.\\d+$" },
+    "contract": { "const": "business/v1" },
+    "provides": {
+      "type": "object",
+      "additionalProperties": { "type": "array", "items": { "type": "string", "pattern": "^[a-z][a-z0-9_]{1,30}$" } }
+    },
+    "uses": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "required": ["module", "capability", "actions"],
+        "properties": {
+          "module": { "type": "string" },
+          "capability": { "type": "string" },
+          "actions": { "type": "array", "items": { "type": "string" }, "minItems": 1 }
+        }
+      }
+    },
+    "permissions": { "type": "array", "items": { "type": "string", "pattern": "^[a-z0-9_]+:[a-z0-9_]+:[a-zA-Z0-9_]+$" } },
+    "plans": {
+      "type": "object",
+      "minProperties": 1,
+      "additionalProperties": {
+        "type": "object",
+        "required": ["monthlyPriceBani"],
+        "properties": {
+          "monthlyPriceBani": { "type": "integer", "minimum": 0 },
+          "perSeat": { "type": "boolean" },
+          "description": { "type": "string" }
+        }
+      }
+    }
+  }
+}

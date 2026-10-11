@@ -1,0 +1,14 @@
+{
+  "name": "UNIVERSAL CORE",
+  "edition": "business",
+  "product": "BUSINESS OS",
+  "version": "0.1.0",
+  "contracts": ["business/v1"],
+  "discovery": {
+    "health": "/health",
+    "gateway": "/api/v1/gateway",
+    "auth": "/api/v1/auth/login",
+    "contracts": "/api/v1/contracts"
+  },
+  "note": "Punct minimal de descoperire. Registrul complet de module, capabilități și prețuri este privat, server-side."
+}

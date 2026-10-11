@@ -1,0 +1,17 @@
+name: CI
+on:
+  push:
+  pull_request:
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+      - run: npm test
+      - name: No MINTBERG/FORGE references in code
+        run: |
+          if grep -riE "mintberg|forge" core modules apps seed --include=*.js --include=*.html | grep -viE "^[^:]+:[0-9]*:?\s*(//|\*|/\*)" ; then
+            echo "Found MINTBERG/FORGE reference outside comments"; exit 1; fi

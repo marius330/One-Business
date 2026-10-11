@@ -1,0 +1,14 @@
+{
+  "name": "one-business",
+  "version": "0.1.0",
+  "description": "BUSINESS OS — SaaS modular pentru SRL-uri din Romania, construit pe UNIVERSAL CORE (Business Edition). Prototip cu date sintetice.",
+  "type": "module",
+  "private": true,
+  "engines": { "node": ">=20" },
+  "scripts": {
+    "start": "node apps/api/server.js",
+    "seed": "node seed/synthetic.js",
+    "test": "node --test \"test/**/*.test.js\""
+  },
+  "license": "UNLICENSED"
+}

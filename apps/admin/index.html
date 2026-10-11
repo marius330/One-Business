@@ -1,0 +1,101 @@
+<!doctype html>
+<html lang="ro">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>BUSINESS OS — Admin</title>
+<style>
+  :root { --bg:#f6f7f9; --card:#fff; --ink:#1b1f24; --muted:#6b7280; --line:#e5e7eb; --accent:#0f766e; --warn:#b45309; --bad:#b91c1c; --ok:#15803d; }
+  @media (prefers-color-scheme: dark) { :root { --bg:#0f1115; --card:#171a21; --ink:#e6e8ec; --muted:#9aa3af; --line:#2a2f3a; } }
+  body { margin:0; font: 14px/1.5 system-ui, sans-serif; background:var(--bg); color:var(--ink); }
+  header { padding:16px 24px; border-bottom:1px solid var(--line); display:flex; gap:16px; align-items:center; flex-wrap:wrap; }
+  header h1 { font-size:18px; margin:0; }
+  main { padding:24px; display:grid; gap:24px; max-width:1200px; margin:0 auto; }
+  .card { background:var(--card); border:1px solid var(--line); border-radius:10px; padding:16px; }
+  .card h2 { margin:0 0 12px; font-size:15px; }
+  table { width:100%; border-collapse:collapse; font-size:13px; }
+  th, td { text-align:left; padding:6px 8px; border-bottom:1px solid var(--line); vertical-align:top; }
+  th { color:var(--muted); font-weight:600; }
+  .pill { display:inline-block; padding:1px 8px; border-radius:999px; font-size:12px; border:1px solid var(--line); margin:1px; }
+  .active { color:var(--ok); } .trial { color:var(--accent); } .suspended, .cancelled { color:var(--bad); } .past_due { color:var(--warn); }
+  input, button, select { font:inherit; padding:6px 10px; border-radius:6px; border:1px solid var(--line); background:var(--card); color:var(--ink); }
+  button { cursor:pointer; } button.primary { background:var(--accent); color:#fff; border-color:var(--accent); }
+  .muted { color:var(--muted); } .row { display:flex; gap:8px; flex-wrap:wrap; align-items:center; }
+  pre { white-space:pre-wrap; font-size:12px; max-height:260px; overflow:auto; }
+</style>
+</head>
+<body>
+<header>
+  <h1>BUSINESS OS — Dashboard administrativ</h1>
+  <span class="muted">UNIVERSAL CORE · Business Edition · date sintetice</span>
+  <span class="row" style="margin-left:auto">
+    <input id="key" type="password" placeholder="Platform key" size="28">
+    <button class="primary" id="connect">Conectează</button>
+  </span>
+</header>
+<main>
+  <section class="card"><h2>Tenanți (SRL-uri)</h2><div id="tenants" class="muted">Introduceți cheia de platformă.</div></section>
+  <section class="card"><h2>Onboarding tenant nou</h2>
+    <div class="row">
+      <input id="n-cui" placeholder="CUI (ex. RO12345678)"> <input id="n-name" placeholder="Denumire SRL">
+      <input id="n-email" placeholder="Email proprietar"> <input id="n-pass" type="password" placeholder="Parolă (min 10)">
+      <button id="n-create">Creează</button>
+    </div>
+  </section>
+  <section class="card"><h2>Catalog module (registru privat)</h2><div id="catalog"></div></section>
+  <section class="card"><h2>Audit platformă</h2><pre id="audit"></pre></section>
+</main>
+<script>
+const $ = (s) => document.querySelector(s);
+const key = () => $("#key").value.trim();
+const api = async (path, opts = {}) => {
+  const r = await fetch(path, { ...opts, headers: { "content-type": "application/json", "x-platform-key": key(), ...(opts.headers || {}) } });
+  const body = await r.json();
+  if (!r.ok) throw new Error(body.message || body.error);
+  return body;
+};
+const ron = (bani) => (bani / 100).toLocaleString("ro-RO", { style: "currency", currency: "RON" });
+async function refresh() {
+  try {
+    const [{ tenants }, { modules }, { entries }] = await Promise.all([api("/api/v1/platform/overview"), api("/api/v1/platform/catalog"), api("/api/v1/platform/audit")]);
+    const options = modules.map((m) => `<option value="${m.id}">${m.name}</option>`).join("");
+    $("#tenants").innerHTML = `<table><tr><th>SRL</th><th>CUI</th><th>Status</th><th>Utilizatori</th><th>Module</th><th>Acțiuni</th></tr>` + tenants.map((t) => `
+      <tr><td>${t.name}<br><span class="muted">${t.id}</span></td><td>${t.cui}</td><td class="${t.status}">${t.status}</td><td>${t.users}</td>
+      <td>${t.modules.map((m) => `<span class="pill ${m.status}">${m.moduleId} · ${m.plan} · ${m.status}</span>`).join("") || "<span class='muted'>niciun modul</span>"}</td>
+      <td class="row"><select data-t="${t.id}" class="mod">${options}</select>
+        <button data-t="${t.id}" data-op="activate">Activează</button><button data-t="${t.id}" data-op="trial">Trial</button>
+        <button data-t="${t.id}" data-op="suspend">Suspendă</button>
+        <button data-t="${t.id}" data-op="${t.status === "active" ? "tenant-suspend" : "tenant-activate"}">${t.status === "active" ? "Suspendă SRL" : "Reactivează SRL"}</button>
+        <button data-t="${t.id}" data-op="invoice">Factură</button><button data-t="${t.id}" data-op="export">Export</button></td></tr>`).join("") + "</table>";
+    $("#catalog").innerHTML = `<table><tr><th>Modul</th><th>Versiune</th><th>Oferă</th><th>Folosește</th><th>Planuri</th></tr>` + modules.map((m) => `
+      <tr><td><b>${m.name}</b><br><span class="muted">${m.id} · ${m.description}</span></td><td>${m.version}<br><span class="muted">${m.contract}</span></td>
+      <td>${Object.entries(m.provides).map(([c, a]) => `<span class="pill">${c}: ${a.join(", ")}</span>`).join("")}</td>
+      <td>${(m.uses || []).map((u) => `<span class="pill">${u.module}.${u.capability}.${u.actions.join("/")}</span>`).join("") || "<span class='muted'>—</span>"}</td>
+      <td>${Object.entries(m.plans).map(([p, d]) => `<span class="pill">${p}: ${ron(d.monthlyPriceBani)}${d.perSeat ? "/utilizator" : ""}</span>`).join("")}</td></tr>`).join("") + "</table>";
+    $("#audit").textContent = entries.map((e) => `${e.at}  ${e.event}  ${JSON.stringify(Object.fromEntries(Object.entries(e).filter(([k]) => !["at", "event", "scope"].includes(k))))}`).join("\n");
+  } catch (e) { $("#tenants").textContent = "Eroare: " + e.message; }
+}
+$("#connect").onclick = refresh;
+$("#n-create").onclick = async () => {
+  try {
+    await api("/api/v1/platform/tenants", { method: "POST", body: JSON.stringify({ cui: $("#n-cui").value, name: $("#n-name").value, owner: { email: $("#n-email").value, password: $("#n-pass").value, fullName: "Proprietar" } }) });
+    refresh();
+  } catch (e) { alert(e.message); }
+};
+$("#tenants").addEventListener("click", async (ev) => {
+  const b = ev.target.closest("button"); if (!b) return;
+  const t = b.dataset.t, op = b.dataset.op, moduleId = document.querySelector(`select.mod[data-t="${t}"]`).value;
+  try {
+    if (op === "activate") await api(`/api/v1/platform/tenants/${t}/modules`, { method: "POST", body: JSON.stringify({ moduleId, plan: "standard" }) });
+    if (op === "trial") await api(`/api/v1/platform/tenants/${t}/modules`, { method: "POST", body: JSON.stringify({ moduleId, plan: "standard", trial: true }) });
+    if (op === "suspend") await api(`/api/v1/platform/tenants/${t}/modules`, { method: "POST", body: JSON.stringify({ moduleId, op: "suspend" }) });
+    if (op === "tenant-suspend") await api(`/api/v1/platform/tenants/${t}/status`, { method: "POST", body: JSON.stringify({ status: "suspended", reason: "manual" }) });
+    if (op === "tenant-activate") await api(`/api/v1/platform/tenants/${t}/status`, { method: "POST", body: JSON.stringify({ status: "active", reason: "manual" }) });
+    if (op === "invoice") { const inv = await api(`/api/v1/platform/tenants/${t}/invoice-preview`); alert(`Factură ${inv.period}: ${inv.lines.map((l) => `${l.description} ${ron(l.totalBani)}`).join("; ") || "nimic de facturat"} — total cu TVA ${ron(inv.totalBani)}`); }
+    if (op === "export") { const snap = await api(`/api/v1/platform/tenants/${t}/export`); alert(`Export tenant ${t}: ${Object.entries(snap.collections).map(([c, r]) => `${c}=${r.length}`).join(", ")}`); }
+    refresh();
+  } catch (e) { alert(e.message); }
+});
+</script>
+</body>
+</html>
